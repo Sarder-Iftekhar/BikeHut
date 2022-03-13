@@ -1,10 +1,12 @@
-﻿using BikeShop.AppDbCOntext;
+﻿using BikeShop.AppDbContext;
 using BikeShop.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
 namespace BikeShop.Controllers
 {
+    [Authorize(Roles="Admin,Executive")]
     public class MakeController : Controller
     {
         private readonly BikeShopDbContext _db;

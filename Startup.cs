@@ -1,8 +1,10 @@
-﻿using BikeShop.AppDbCOntext;
+﻿using BikeShop.AppDbContext;
+using BikeShop.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -34,13 +36,24 @@ namespace BikeShop
             });
 
             services.AddDbContext<BikeShopDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Default")));
-
-
+            //Error!! without changes this 
+            //services.AddDefaultIdentity<IdentityUser>()
+            //    .AddEntityFrameworkStores<BikeShopDbContext>();
+            //to this
+            //add identity role pass it as parameter
+            //add DefaultUI and DefaultTokenProviders
+            services.AddIdentity<IdentityUser, IdentityRole>()
+               .AddEntityFrameworkStores<BikeShopDbContext>()
+               .AddDefaultUI()
+               .AddDefaultTokenProviders();
+            //for automatic data base migration added this line
+            services.AddScoped<IDBInitializer, DBInitializer>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        //parameter IDBInitializer is added for auto database migration
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env ,IDBInitializer dBInitializer)
         {
             if (env.IsDevelopment())
             {
@@ -54,6 +67,12 @@ namespace BikeShop
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            app.UseAuthentication();
+            //this is added for auto migration
+            dBInitializer.Initialize();
+
+
+
             app.UseCookiePolicy();
             //Convention based routes
 

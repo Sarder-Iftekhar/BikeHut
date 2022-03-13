@@ -1,12 +1,14 @@
-﻿using BikeShop.AppDbCOntext;
+﻿using BikeShop.AppDbContext;
 using BikeShop.Models;
 using BikeShop.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 namespace BikeShop.Controllers
 {
+    [Authorize(Roles = "Admin,Executive")]
     public class ModelController : Controller
     {
         // 
@@ -41,7 +43,7 @@ namespace BikeShop.Controllers
             //as we already have foreign key reference to make in our model entity we can use eagerloading to load associated makes in our model entity 
 
             var model = _db.Models.Include(m => m.Make);
-            return View(model);
+            return View(model.ToList());
         }
 
         //httpget
