@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.IO;
+using Microsoft.AspNetCore.Hosting.Internal;
 
 namespace BikeShop.Controllers
 {
@@ -13,13 +15,15 @@ namespace BikeShop.Controllers
     {
         // 
         private readonly BikeShopDbContext _db;
+        //for image
+        private readonly HostingEnvironment _hostingEnvironment;
 
         //when post or retrive it automatically bind the property
         //dont have to exclusively pass it an object on the association method
 
         [BindProperty]
         public BikeViewModel BikeVM { get; set; }
-        public BikeController(BikeShopDbContext db)
+        public BikeController(BikeShopDbContext db,HostingEnvironment hostingEnvironment)
         {
             _db = db;
 
@@ -33,6 +37,7 @@ namespace BikeShop.Controllers
                 Bike = new Models.Bike()
 
             };
+            _hostingEnvironment= hostingEnvironment;
         }
         public IActionResult Index()
         {
@@ -55,17 +60,70 @@ namespace BikeShop.Controllers
             return View(BikeVM);
         }
         [HttpPost, ActionName("Create")]
-       // [ValidateAntiForgeryToken]
+        // [ValidateAntiForgeryToken]
         public IActionResult CreatePost()
         {
             if (!ModelState.IsValid)
             {
+                //add it for for nvalid not doing anything and just return in the BikeVM
+                BikeVM.Makes = _db.Makes.ToList();
+                BikeVM.Models = _db.Models.ToList();
+
                 return View(BikeVM);
             }
             _db.Bikes.Add(BikeVM.Bike);
-            _db.SaveChanges();
-            return RedirectToAction(nameof(Index));
+            // UploadImageIfAvailable();
 
+            _db.SaveChanges();
+
+
+
+            ////////////////////////bike logic//////////////////////
+            ////////////////////////////////////////////////////////
+
+
+
+            // Get BikeID we have saved in database
+            var BikeID = BikeVM.Bike.Id;
+
+            //Get wwrootPath to save the file on server
+            string wwrootPath = _hostingEnvironment.WebRootPath;
+
+            //Get the Uploaded files
+            var files = HttpContext.Request.Form.Files;
+
+            //Get the reference of DBSet for the bike we have saved in our database
+            var SavedBike = _db.Bikes.Find(BikeID);
+
+
+            //Upload the file on server and save the path in database if user have submitted file
+            if (files.Count != 0)
+            {
+                var ImagePath = @"images\bike\";
+                //Extract the extension of submitted file
+                var Extension = Path.GetExtension(files[0].FileName);
+
+                //Create the relative image path to be saved in database table 
+                var RelativeImagePath = ImagePath + BikeID + Extension;
+
+                //Create absolute image path to upload the physical file on server
+                var AbsImagePath = Path.Combine(wwrootPath, RelativeImagePath);
+
+
+                //Upload the file on server using Absolute Path
+                using (var filestream = new FileStream(AbsImagePath, FileMode.Create))
+                {
+                    files[0].CopyTo(filestream);
+                }
+
+                //Set the path in database
+                SavedBike.ImagePath = RelativeImagePath;
+                _db.SaveChanges();
+
+               
+
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         //public IActionResult Edit(int id)
@@ -92,18 +150,23 @@ namespace BikeShop.Controllers
         //    return RedirectToAction(nameof(Index)); ;
 
         //}
-        //[HttpPost]
-        //public IActionResult Delete(int id)
-        //{
-        //    Model model = _db.Models.Find(id);
-        //    if (model == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    _db.Models.Remove(model);
-        //    _db.SaveChanges();
-        //    return RedirectToAction(nameof(Index));
-        //}
+        [HttpPost]
+        public IActionResult Delete(int id)
+        {
+            //why Bike is type here?
+            Bike bike = _db.Bikes.Find(id);
+            if (bike == null)
+            {
+                return NotFound();
+            }
+            _db.Bikes.Remove(bike);
+            _db.SaveChanges();
+            return RedirectToAction(nameof(Index));
+        }
+
+
+
+  
 
 
 
