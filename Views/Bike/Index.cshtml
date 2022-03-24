@@ -27,7 +27,7 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td><img src="@Html.DisplayFor(m => item.ImagePath)" width="150px" height="100px" /></td>
+                    <td><img src="@Html.DisplayFor(m => item.ImagePath)" width="150" height="100" /></td>
                     <td>
                         <b>@Html.DisplayFor(m => item.Make.Name) (@Html.DisplayFor(m => item.Year))</b> <br />
                         <b>Model: </b>@Html.DisplayFor(m => item.Model.Name)<br />
