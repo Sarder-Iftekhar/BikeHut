@@ -4,6 +4,7 @@ using BikeShop.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace BikeShop.Controllers
@@ -100,6 +101,14 @@ namespace BikeShop.Controllers
             _db.Models.Remove(model);
             _db.SaveChanges();
             return RedirectToAction(nameof(Index));
+        }
+        [AllowAnonymous]
+        [HttpGet("api/models/{MakeID}")]
+
+        public IEnumerable<Model> Models(int MakeID)
+        {
+            return _db.Models.ToList().Where(m=>m.MakeID==MakeID);
+
         }
 
 
